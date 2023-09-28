@@ -1,0 +1,35 @@
+body {
+  background-color: black;
+}
+.container {
+  position: relative;
+  color: 'white';
+}
+.score {
+  color: aliceblue;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.modal {
+  position: absolute;
+  top: 30%;
+  right: 35%;
+  background-color: aliceblue;
+  width: 20rem;
+  padding: 5px;
+  border-radius: 10px;
+}
+.bg-white {
+  vertical-align: middle;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.buttonContainer {
+  vertical-align: middle;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
