@@ -7,8 +7,10 @@ const scoreEl = document.querySelector('#scoreEl')
 
 const devicePixelRatio = window.devicePixelRatio || 1
 
-canvas.width = innerWidth * devicePixelRatio
-canvas.height = innerHeight * devicePixelRatio
+canvas.width = 1024 * devicePixelRatio
+canvas.height = 576 * devicePixelRatio
+
+c.scale(devicePixelRatio, devicePixelRatio)
 
 const x = canvas.width / 2
 const y = canvas.height / 2
@@ -25,7 +27,7 @@ socket.on('updateProjectiles', (backEndProjectiles) => {
       frontEndProjectiles[id] = new Projectile({
         x: backEndProjectile.x,
         y: backEndProjectile.y,
-        radius: 5,
+        radius: 3,
         color: frontEndPlayers[backEndProjectile.playerId]?.color,
         velocity: backEndProjectile.velocity
       })
@@ -50,8 +52,9 @@ socket.on('updatePlayers', (backEndPlayers) => {
       frontEndPlayers[id] = new Player({
         x: backEndPlayer.x,
         y: backEndPlayer.y,
-        radius: 10,
-        color: backEndPlayer.color
+        radius: 8,
+        color: backEndPlayer.color,
+        username: backEndPlayer.username
       })
 
       document.querySelector('#playerLabels').innerHTML += `
@@ -83,9 +86,12 @@ socket.on('updatePlayers', (backEndPlayers) => {
         parentDiv.appendChild(div)
       })
 
+      frontEndPlayers[id].target = {
+        x: backEndPlayer.x,
+        y: backEndPlayer.y
+      }
+
       if (id === socket.id) {
-        frontEndPlayers[id].x = backEndPlayer.x
-        frontEndPlayers[id].y = backEndPlayer.y
         const lastBackendInputIndex = playerInputs.findIndex((input) => {
           return backEndPlayer.sequenceNumber === input.sequenceNumber
         })
@@ -93,16 +99,8 @@ socket.on('updatePlayers', (backEndPlayers) => {
         if (lastBackendInputIndex > -1)
           playerInputs.splice(0, lastBackendInputIndex + 1)
         playerInputs.forEach((input) => {
-          frontEndPlayers[id].x += input.dx
-          frontEndPlayers[id].y += input.dy
-        })
-      } else {
-        // for all other players
-        gsap.to(frontEndPlayers[id], {
-          x: backEndPlayer.x,
-          y: backEndPlayer.y,
-          duration: 0.0,
-          ease: 'linear'
+          frontEndPlayers[id].target.x += input.dx
+          frontEndPlayers[id].target.y += input.dy
         })
       }
     }
@@ -126,11 +124,19 @@ socket.on('updatePlayers', (backEndPlayers) => {
 let animationId
 function animate() {
   animationId = requestAnimationFrame(animate)
-  c.fillStyle = 'rgba(0, 0, 0, 0.1)'
-  c.fillRect(0, 0, canvas.width, canvas.height)
+  //c.fillStyle = 'rgba(0, 0, 0, 0.1)'
+  c.clearRect(0, 0, canvas.width, canvas.height)
 
   for (const id in frontEndPlayers) {
     const frontEndplayer = frontEndPlayers[id]
+    if (frontEndplayer.target) {
+      frontEndPlayers[id].x +=
+        (frontEndPlayers[id].target.x - frontEndPlayers[id].x) * 0.5
+
+      frontEndPlayers[id].y +=
+        (frontEndPlayers[id].target.y - frontEndPlayers[id].y) * 0.5
+    }
+
     frontEndplayer.draw()
   }
 
@@ -138,7 +144,6 @@ function animate() {
     const frontEndProjectile = frontEndProjectiles[id]
     frontEndProjectile.draw()
   }
-
   // for (let i = frontEndProjectiles.length - 1; i >= 0; i--) {
   //   const frontEndProjectile = frontEndProjectiles[i]
   //   frontEndProjectile.update()
@@ -160,7 +165,7 @@ const keys = {
   }
 }
 
-const SPEED = 10
+const SPEED = 5
 const playerInputs = []
 let sequenceNumber = 0
 setInterval(() => {

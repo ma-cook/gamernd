@@ -47,10 +47,10 @@ io.on('connection', (socket) => {
     io.emit('updatePlayers', backEndplayers)
   })
 
-  socket.on('initGame', ({ username, width, height, devicePixelRatio }) => {
+  socket.on('initGame', ({ username, width, height }) => {
     backEndplayers[socket.id] = {
-      x: 500 * Math.random(),
-      y: 500 * Math.random(),
+      x: 1024 * Math.random(),
+      y: 576 * Math.random(),
       color: `hsl(${360 * Math.random()}, 100%, 50%)`,
       sequenceNumber: 0,
       score: 0,
@@ -64,14 +64,14 @@ io.on('connection', (socket) => {
     }
 
     backEndplayers[socket.id].radius = RADIUS
-
-    if (devicePixelRatio > 1) {
-      backEndplayers[socket.id].radius = 2 * RADIUS
-    }
   })
 
-  const SPEED = 10
+  const SPEED = 5
   socket.on('keydown', ({ keycode, sequenceNumber }) => {
+    const backEndplayer = backEndplayers[socket.id]
+
+    if (!backEndplayers[socket.id]) return
+
     backEndplayers[socket.id].sequenceNumber = sequenceNumber
     switch (keycode) {
       case 'KeyW':
@@ -91,6 +91,23 @@ io.on('connection', (socket) => {
 
         break
     }
+
+    const playerSides = {
+      left: backEndplayer.x - backEndplayer.radius,
+      right: backEndplayer.x + backEndplayer.radius,
+      top: backEndplayer.y - backEndplayer.radius,
+      bottom: backEndplayer.y + backEndplayer.radius
+    }
+
+    if (playerSides.left < 0) backEndplayers[socket.id].x = backEndplayer.radius
+
+    if (playerSides.right > 1024)
+      backEndplayers[socket.id].x = 1024 - backEndplayer.radius
+
+    if (playerSides.top < 0) backEndplayers[socket.id].y = backEndplayer.radius
+
+    if (playerSides.bottom > 576)
+      backEndplayers[socket.id].y = 576 - backEndplayer.radius
   })
 })
 
